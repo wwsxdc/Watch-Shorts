@@ -1,0 +1,14 @@
+.app {
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.app__header {
+  margin-bottom: 16px;
+}
+
+.app__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
