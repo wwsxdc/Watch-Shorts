@@ -73,7 +73,7 @@ export function useStories() {
       setStories((prev) => [...removeExpiredStories(prev), nextStory]);
       return true;
     } catch (error) {
-      setStoryError(error?.message || "Ошибка придобавлении истории");
+      setStoryError(error?.message || "Ошибка при добавлении истории");
       return false;
     } finally {
       setIsAddingStory(false);

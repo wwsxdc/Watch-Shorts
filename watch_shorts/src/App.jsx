@@ -8,6 +8,8 @@ function App() {
     stories,
     activeStoryIndex,
     isViewerOpen,
+    isAddingStory,
+    storyError,
     addStory,
     openViewer,
     closeViewer,
@@ -18,10 +20,16 @@ function App() {
   return (
     <main className="app">
       <header className="app__header">
-        <h1 className="app__title">Watch Shorts</h1>
+        <h1 className="text-4xl text-center">Watch Shorts</h1>
       </header>
 
-      <StoryBar stories={stories} onAddStory={addStory} onOpenStory={openViewer} />
+      <StoryBar
+        stories={stories}
+        onAddStory={addStory}
+        onOpenStory={openViewer}
+        isAddingStory={isAddingStory}
+        storyError={storyError}
+      />
 
       <StoryViewerModal
         stories={stories}
