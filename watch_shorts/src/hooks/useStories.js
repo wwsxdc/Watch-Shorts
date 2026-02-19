@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { STORY_TTL_MS } from "../constants/story";
 import { fileToBase64Constrained } from "../utils/image";
-import { readStoriesFromStorage, writeStoriesToStorage } from "../utils/storage";
+import {
+  readStoriesFromStorage,
+  writeStoriesToStorage,
+} from "../utils/storage";
 
 function removeExpiredStories(stories) {
   const now = Date.now();
@@ -9,29 +12,72 @@ function removeExpiredStories(stories) {
 }
 
 export function useStories() {
-  const [stories, setStories] = useState(() => removeExpiredStories(readStoriesFromStorage()));
+  const [stories, setStories] = useState(() =>
+    removeExpiredStories(readStoriesFromStorage()),
+  );
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isAddingStory, setIsAddingStory] = useState(false);
+  const [storyError, setStoryError] = useState("");
 
   useEffect(() => {
-    writeStoriesToStorage(stories);
+    const timerId = setInterval(() => {
+      setStories((prev) => removeExpiredStories(prev));
+    }, 60_000);
+
+    return () => clearInterval(timerId);
+  }, []);
+
+  useEffect(() => {
+    if (!stories.length) {
+      setActiveStoryIndex(0);
+      setIsViewerOpen(false);
+      return;
+    }
+    if (activeStoryIndex > stories.length - 1) {
+      setActiveStoryIndex(stories.length - 1);
+    }
+  }, [stories, activeStoryIndex]);
+
+  useEffect(() => {
+    const cleaned = removeExpiredStories(stories);
+
+    if (cleaned.length !== stories.length) {
+      setStories(cleaned);
+      return;
+    }
+    try {
+      writeStoriesToStorage(cleaned);
+    } catch {
+      setStoryError("Не удалось сохранить историю");
+    }
   }, [stories]);
 
   const addStory = async (file) => {
-    // TODO: wire AddStoryButton to provide real file.
-    if (!file) return;
+    if (!file) return false;
 
-    const imageBase64 = await fileToBase64Constrained(file);
-    const createdAt = Date.now();
+    setIsAddingStory(true);
+    setStoryError("");
 
-    const nextStory = {
-      id: crypto.randomUUID(),
-      imageBase64,
-      createdAt,
-      expiresAt: createdAt + STORY_TTL_MS,
-    };
+    try {
+      const imageBase64 = await fileToBase64Constrained(file);
+      const createdAt = Date.now();
 
-    setStories((prev) => [...removeExpiredStories(prev), nextStory]);
+      const nextStory = {
+        id: crypto.randomUUID(),
+        imageBase64,
+        createdAt,
+        expiresAt: createdAt + STORY_TTL_MS,
+      };
+
+      setStories((prev) => [...removeExpiredStories(prev), nextStory]);
+      return true;
+    } catch (error) {
+      setStoryError(error?.message || "Ошибка придобавлении истории");
+      return false;
+    } finally {
+      setIsAddingStory(false);
+    }
   };
 
   const openViewer = (index) => {
@@ -60,13 +106,15 @@ export function useStories() {
       stories,
       activeStoryIndex,
       isViewerOpen,
+      isAddingStory,
+      storyError,
       addStory,
       openViewer,
       closeViewer,
       goNext,
       goPrev,
     }),
-    [stories, activeStoryIndex, isViewerOpen]
+    [stories, activeStoryIndex, isViewerOpen, isAddingStory, storyError],
   );
 
   return value;
