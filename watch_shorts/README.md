@@ -1,16 +1,116 @@
-# React + Vite
+# Watch Shorts
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend-приложение с функционалом сторис (как в Instagram/WhatsApp): пользователь добавляет изображение, сторис хранится локально и исчезает через 24 часа.
 
-Currently, two official plugins are available:
+Проект полностью client-side, без бэкенда.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Функционал
 
-## React Compiler
+- Лента сторис в верхней части экрана.
+- Кнопка `+` для загрузки изображения.
+- Конвертация изображения в `base64` и сохранение в `localStorage`.
+- Ограничение размеров изображения до `1080x1920` с сохранением пропорций.
+- Открытие сторис в модальном просмотрщике.
+- Навигация в просмотрщике:
+  - кнопки `Prev/Next`
+  - свайп влево/вправо
+  - закрытие по `Esc`
+  - закрытие по клику на фон
+- Автоматическое удаление сторис после 24 часов:
+  - при инициализации
+  - по таймеру (каждую минуту)
+  - перед сохранением в `localStorage`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Технологии
 
-## Expanding the ESLint configuration
+- `React 19`
+- `Vite 7`
+- `Tailwind CSS 4`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Запуск проекта
+
+Требования:
+
+- `Node.js` 18+ (рекомендуется LTS)
+- `npm`
+
+Установка и запуск:
+
+```bash
+npm install
+npm run dev
+```
+
+Сборка:
+
+```bash
+npm run build
+```
+
+Локальный предпросмотр production-сборки:
+
+```bash
+npm run preview
+```
+
+## Структура проекта
+
+```text
+src/
+  components/
+    AddStoryButton.jsx      # Кнопка добавления сторис и file input
+    StoryBar.jsx            # Верхняя лента сторис
+    StoryCard.jsx           # Карточка/превью одной сторис
+    StoryViewerModal.jsx    # Модальный просмотр сторис
+  hooks/
+    useStories.js           # Основная бизнес-логика сторис
+  utils/
+    image.js                # Resize + конвертация в base64
+    storage.js              # Чтение/запись в localStorage
+  constants/
+    story.js                # TTL и лимиты изображения
+  App.jsx
+  App.css
+  index.css
+```
+
+## Как это работает
+
+1. Пользователь выбирает изображение через `AddStoryButton`.
+2. В `useStories` вызывается `fileToBase64Constrained(file)`.
+3. Изображение ресайзится до max `1080x1920`, затем сохраняется как base64.
+4. Создается объект сторис:
+   - `id`
+   - `imageBase64`
+   - `createdAt`
+   - `expiresAt`
+5. Сторис сохраняется в `localStorage`.
+6. Просроченные сторис автоматически удаляются.
+
+## Формат данных сторис
+
+```json
+{
+  "id": "uuid",
+  "imageBase64": "data:image/jpeg;base64,...",
+  "createdAt": 1739870000000,
+  "expiresAt": 1739956400000
+}
+```
+
+## Ограничения и заметки
+
+- Хранилище браузера ограничено по объему (`localStorage quota`).
+- Качество `base64`-изображений зависит от компрессии в `canvas.toDataURL`.
+- Приложение не синхронизирует данные между устройствами/пользователями.
+- Это учебный/тестовый проект, не production-ready соцсеть.
+
+## Соответствие требованиям задачи
+
+- Список сторис сверху + кнопка `+`: `done`
+- Загрузка изображения и сохранение в `localStorage`: `done`
+- Удаление через 24 часа: `done`
+- Client-side only: `done`
+- Responsive: `done`
+- Ограничение изображения `1080x1920`: `done`
+- Свайп сторис (optional): `done`
